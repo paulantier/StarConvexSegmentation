@@ -1,29 +1,97 @@
-
-from PolygonUnet import PolygonUnet
 import numpy as np
 import torch
+import cv2
 import torch.nn.functional as F
 
-class StarPolygon():
-    def __init__(self, num_coordinates=8, num_classes=1, pretrained=True):
-        self.model = PolygonUnet(num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
+from PolygonUnet import PolygonUnet
 
-    def pad_image(image, patch_size=128, overlap=64):
+class StarPolygon:
+    def __init__(
+                self,
+                patch_size: int = 128,
+                num_coordinates: int = 8,
+                num_classes: int = 1,
+                pretrained: bool = True
+                ):
+        self.patch_size = patch_size
+
+        self.polygon_model = PolygonUnet(input_size = self.patch_size, num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
+        
+
+    def _pad_image(
+                  self,
+                  image,
+                  ):
+        
         _, _, h, w = image.shape
-        pad_h = (patch_size - (h % patch_size)) % patch_size
-        pad_w = (patch_size - (w % patch_size)) % patch_size
+        pad_h = (self.patch_size - (h % self.patch_size)) % self.patch_size
+        pad_w = (self.patch_size - (w % self.patch_size)) % self.patch_size
         padded_image = F.pad(image, (0, pad_w, 0, pad_h), mode='constant', value=0)
         return padded_image
 
-    def create_patches(image, patch_size=128, overlap=64):
+    def _create_patches(
+                       self,
+                       image,
+                       ):
+        
+        overlap = self.patch_size // 2
         _, _, h, w = image.shape
         patches = []
-        for i in range(0, h - patch_size + 1, patch_size - overlap):
-            for j in range(0, w - patch_size + 1, patch_size - overlap):
-                patch = image[:, :, i:i + patch_size, j:j + patch_size]
+        for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
+            for j in range(0, w - self.patch_size + 1, self.patch_size - overlap):
+                patch = image[:, :, i:i + self.patch_size, j:j + self.patch_size]
                 patches.append(patch)
         return patches
+    
+    def _assemble_patches(
+                         self,
+                         patches,
+                         image_size: tuple
+                         ):
+        _, _, h, w = image_size
+
+        overlap = self.patch_size // 2
+
+        reconstructed_image = torch.zeros((1, 1, h, w), dtype=patches[0].dtype)
+
+        patch_idx = 0
+        for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
+            for j in range(0, w - self.patch_size + 1, self.patch_size - overlap):
+                reconstructed_image[:, :, i:i + self.patch_size, j:j + self.patch_size] += patches[patch_idx]
+                patch_idx += 1
+
+        return reconstructed_image
 
         
-    def forward(self, x):
+    def __call__(self, full_image):
+
+        padded_image = self._pad_image(full_image)
+        patches = self._create_patches(padded_image)
+
+        processed_patches = []
+        for patch in patches:
+            processed_patch = self.polygon_model(patch)
+            processed_patches.append(processed_patch)
         
+        reconstructed_image = self._assemble_patches(processed_patches, full_image.shape)
+
+        return reconstructed_image[:, :, :full_image.shape[2], :full_image.shape[3]]
+
+
+if __name__ == "__main__":
+
+    # Load an example image
+    image_path = './RORAIMA.jpg'
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = np.transpose(image, (2, 0, 1))  # Convert to CxHxW
+    image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)  # Add batch dimension
+
+    # Initialize the StarPolygon model
+    star_polygon = StarPolygon(patch_size=128, num_coordinates=0, num_classes=0, pretrained=True)
+
+    # Run the forward pass
+    output_image = star_polygon(image)
+    
+    print("entrée :", image.shape)
+    print("sortie :", output_image.shape)

@@ -4,14 +4,14 @@ import torchvision.models as models
 from torchvision.models import ResNet18_Weights
 
 class PolygonUnet(nn.Module):
-    def __init__(self, num_coordinates=8, num_classes=1, pretrained=True):
+    def __init__(self, input_size: int = 128, num_coordinates: int = 8, num_classes: int = 1, pretrained: bool = True):
         super(PolygonUnet, self).__init__()
 
         # Load the pre-trained ResNet-18 model
         weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
         resnet = models.resnet18(weights=weights)
 
-        # Encoder (ResNet-18 layers)
+        # Encoder (ResNet-18 layers)                                     # With 128x128 input
         self.enc1 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu) # Output: 64x64x64
         self.enc2 = resnet.layer1                                        # Output: 64x64x64
         self.enc3 = resnet.layer2                                        # Output: 128x32x32
@@ -20,7 +20,7 @@ class PolygonUnet(nn.Module):
 
         self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
 
-        # Decoder
+        # Decoder                                  # With 128x128 input   
         self.dec4 = self._decoder_block(512, 256)  # Output: 256x16x16
         self.dec3 = self._decoder_block(256, 128)  # Output: 128x32x32
         self.dec2 = self._decoder_block(128, 64)   # Output: 64x64x64
@@ -35,7 +35,8 @@ class PolygonUnet(nn.Module):
         )
 
 
-    def _decoder_block(self, in_channels, out_channels):
+
+    def _decoder_block(self, in_channels: int, out_channels: int):
         return nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
@@ -49,34 +50,24 @@ class PolygonUnet(nn.Module):
     def forward(self, x):
         # Encoder forward pass
         enc1 = self.enc1(x)
-        #print(f"enc1 shape: {enc1.shape}")  # 64x128x128
         enc2 = self.enc2(enc1)
-        #print(f"enc2 shape: {enc2.shape}")  # 64x64x64
         enc3 = self.enc3(enc2)
-        #print(f"enc3 shape: {enc3.shape}")  # 128x32x32
         enc4 = self.enc4(enc3)
-        #print(f"enc4 shape: {enc4.shape}")  # 256x16x16
         enc5 = self.enc5(enc4)
-        #print(f"enc5 shape: {enc5.shape}")  # 512x8x8
 
         # Decoder forward pass with skip connections
         dec4 = self.dec4(enc5) + enc4
-        #print(f"dec4 shape: {dec4.shape}")  # 256x16x16
         dec3 = self.dec3(dec4) + enc3
-        #print(f"dec3 shape: {dec3.shape}")  # 128x32x32
         dec2 = self.dec2(dec3) + enc2
-        #print(f"dec2 shape: {dec2.shape}")  # 64x64x64
         dec1 = self.dec1(dec2) + self.up(enc1)
-        #print(f"dec1 shape: {dec1.shape}")  # 64x128x128
 
         # Final convolution
         out = self.final_conv(dec1)
-        #print(f"out shape: {out.shape}")  # num_classesx128x128
         return out
 
 # Example usage
 if __name__ == "__main__":
-    model = PolygonUnet(num_coordinates=8, num_classes=1, pretrained=True)
+    model = PolygonUnet(input_size=128, num_coordinates=8, num_classes=1, pretrained=True)
     x = torch.randn(1, 3, 128, 128)  # Example input
     output = model(x)
     print(f"Output shape: {output.shape}")  # Should be [1, num_classes, 128, 128]
