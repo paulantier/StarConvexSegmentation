@@ -14,6 +14,7 @@ class StarPolygon:
                 pretrained: bool = True
                 ):
         self.patch_size = patch_size
+        self.featuremap_depth = num_coordinates + 1 + num_classes   # Number of output channels for the PolygonUnet model
 
         self.polygon_model = PolygonUnet(num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
         
@@ -52,7 +53,7 @@ class StarPolygon:
 
         overlap = self.patch_size // 2
 
-        reconstructed_image = torch.zeros((self.patch_size[0], self.patch_size[1], h, w), dtype=patches[0].dtype)
+        reconstructed_image = torch.zeros((1, self.featuremap_depth, h, w), dtype=patches[0].dtype)
 
         patch_idx = 0
         for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)  # Add batch dimension
 
     # Initialize the StarPolygon model
-    star_polygon = StarPolygon(patch_size=128, num_coordinates=0, num_classes=0, pretrained=True)
+    star_polygon = StarPolygon(patch_size=512, num_coordinates=8, num_classes=1, pretrained=True)
 
     # Run the forward pass
     output_image = star_polygon(image)
