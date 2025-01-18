@@ -15,7 +15,7 @@ class StarPolygon:
                 ):
         self.patch_size = patch_size
 
-        self.polygon_model = PolygonUnet(input_size = self.patch_size, num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
+        self.polygon_model = PolygonUnet(num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
         
 
     def _pad_image(
@@ -52,7 +52,7 @@ class StarPolygon:
 
         overlap = self.patch_size // 2
 
-        reconstructed_image = torch.zeros((1, 1, h, w), dtype=patches[0].dtype)
+        reconstructed_image = torch.zeros((self.patch_size[0], self.patch_size[1], h, w), dtype=patches[0].dtype)
 
         patch_idx = 0
         for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):

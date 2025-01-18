@@ -4,7 +4,7 @@ import torchvision.models as models
 from torchvision.models import ResNet18_Weights
 
 class PolygonUnet(nn.Module):
-    def __init__(self, input_size: int = 128, num_coordinates: int = 8, num_classes: int = 1, pretrained: bool = True):
+    def __init__(self, num_coordinates: int = 8, num_classes: int = 1, pretrained: bool = True):
         super(PolygonUnet, self).__init__()
 
         # Load the pre-trained ResNet-18 model
@@ -67,7 +67,7 @@ class PolygonUnet(nn.Module):
 
 # Example usage
 if __name__ == "__main__":
-    model = PolygonUnet(input_size=128, num_coordinates=8, num_classes=1, pretrained=True)
+    model = PolygonUnet(num_coordinates=8, num_classes=1, pretrained=True)
     x = torch.randn(1, 3, 128, 128)  # Example input
     output = model(x)
     print(f"Output shape: {output.shape}")  # Should be [1, num_classes, 128, 128]
