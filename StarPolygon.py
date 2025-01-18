@@ -1,22 +1,32 @@
-import numpy as np
+"""Class module containing the StarPolygon pipeline definition."""
+
 import torch
-import cv2
 import torch.nn.functional as F
 
 from PolygonUnet import PolygonUnet
 
+import time
+
 class StarPolygon:
+    """Class containing the StarPolygon pipeline definition."""
     def __init__(
                 self,
                 patch_size: int = 128,
                 num_coordinates: int = 8,
                 num_classes: int = 1,
-                pretrained: bool = True
+                pretrained: bool = True,
+                device: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 ):
         self.patch_size = patch_size
-        self.featuremap_depth = num_coordinates + 1 + num_classes   # Number of output channels for the PolygonUnet model
+        self.device = device
+        self.featuremap_depth = num_coordinates + 1 + num_classes   
+        # Number of output channels for the PolygonUnet model
 
-        self.polygon_model = PolygonUnet(num_coordinates=num_coordinates, num_classes=num_classes, pretrained=pretrained)
+        self.polygon_model = PolygonUnet(
+                                        num_coordinates=num_coordinates,
+                                        num_classes=num_classes,
+                                        pretrained=pretrained
+                                        ).to(device)
         
 
     def _pad_image(
@@ -49,11 +59,11 @@ class StarPolygon:
                          patches,
                          image_size: tuple
                          ):
-        _, _, h, w = image_size
+        b, _, h, w = image_size
 
         overlap = self.patch_size // 2
 
-        reconstructed_image = torch.zeros((1, self.featuremap_depth, h, w), dtype=patches[0].dtype)
+        reconstructed_image = torch.zeros((b, self.featuremap_depth, h, w), dtype=patches[0].dtype)
 
         patch_idx = 0
         for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
@@ -65,14 +75,15 @@ class StarPolygon:
 
         
     def __call__(self, full_image):
-
         padded_image = self._pad_image(full_image)
         patches = self._create_patches(padded_image)
 
         processed_patches = []
         for patch in patches:
-            processed_patch = self.polygon_model(patch)
-            processed_patches.append(processed_patch)
+            with torch.no_grad():
+                processed_patch = self.polygon_model(patch.to(self.device))
+                processed_patches.append(processed_patch.to('cpu'))
+
         
         reconstructed_image = self._assemble_patches(processed_patches, full_image.shape)
 
@@ -81,18 +92,16 @@ class StarPolygon:
 
 if __name__ == "__main__":
 
-    # Load an example image
-    image_path = './RORAIMA.jpg'
-    image = cv2.imread(image_path)
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    image = np.transpose(image, (2, 0, 1))  # Convert to CxHxW
-    image = torch.tensor(image, dtype=torch.float32).unsqueeze(0)  # Add batch dimension
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+
+    image = torch.randn(5, 3, 3000, 3000, dtype=torch.float32)
 
     # Initialize the StarPolygon model
-    star_polygon = StarPolygon(patch_size=512, num_coordinates=8, num_classes=1, pretrained=True)
+    star_polygon = StarPolygon(patch_size=256, num_coordinates=32, num_classes=1, pretrained=True, device=device)
 
     # Run the forward pass
     output_image = star_polygon(image)
+    
     
     print("entrée :", image.shape)
     print("sortie :", output_image.shape)

@@ -1,9 +1,12 @@
+"""Class module containing the PolygonUnet model definition."""
+
 import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import ResNet18_Weights
 
 class PolygonUnet(nn.Module):
+    """Class containing the PolygonUnet model definition."""
     def __init__(self, num_coordinates: int = 8, num_classes: int = 1, pretrained: bool = True):
         super(PolygonUnet, self).__init__()
 
