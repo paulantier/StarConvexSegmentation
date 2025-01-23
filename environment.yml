@@ -1,13 +1,14 @@
 name: StarConvexSegmentationDev
 channels:
+  - pytorch
   - conda-forge
 dependencies:
   - python=3.12
   - pip
   - setuptools
   - numpy
-  - opencv-python
-  - torch
+  - opencv  # Correct name for OpenCV in Conda
+  - pytorch  # Correct name for PyTorch
   - torchvision
   - torchaudio
   - pip:
