@@ -29,12 +29,12 @@ jobs:
         conda init bash
         source ~/.bashrc
         conda env list
-        conda activate StarConvexSegmentationDev
+        conda activate test
         conda info
         pip list
 
     - name: Run Tests
       shell: bash -l {0}
       run: |
-        conda activate StarConvexSegmentationDev
+        conda activate test
         pytest
