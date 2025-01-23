@@ -8,9 +8,9 @@ dependencies:
   - setuptools
   - numpy
   - pip:
-      - torch==2.5.1+cu124
-      - torchvision==0.20.1+cu124
-      - torchaudio==2.5.1+cu124
+      - torch==2.5.1
+      - torchvision==0.20.1
+      - torchaudio==2.5.1
       - opencv-python==4.11.0.86
       - filelock==3.13.1
       - fsspec==2024.2.0
