@@ -23,9 +23,18 @@ jobs:
         environment-file: environment.yml
         auto-activate-base: false
 
-    - name: Run tests
+    - name: Debug Environment
+      shell: bash -l {0}
       run: |
         conda init bash
         source ~/.bashrc
+        conda env list
+        conda activate StarConvexSegmentationDev
+        conda info
+        pip list
+
+    - name: Run Tests
+      shell: bash -l {0}
+      run: |
         conda activate StarConvexSegmentationDev
         pytest
