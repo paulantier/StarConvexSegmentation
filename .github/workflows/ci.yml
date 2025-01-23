@@ -25,5 +25,7 @@ jobs:
 
     - name: Run tests
       run: |
-        conda activate StarConvexSegmentation
+        conda init bash
+        source ~/.bashrc
+        conda activate StarConvexSegmentationDev
         pytest
