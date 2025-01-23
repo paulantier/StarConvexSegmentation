@@ -1,0 +1,8 @@
+name: my_library_env
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pytest
+  - numpy  # Add other dependencies here
