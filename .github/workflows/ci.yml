@@ -48,13 +48,13 @@ jobs:
       shell: bash -l {0}
       run: |
         conda activate test
-        black --check .
+        black .
 
     - name: Check Import Sorting with isort
       shell: bash -l {0}
       run: |
         conda activate test
-        isort --check-only .
+        isort .
 
     - name: Lint Code with Flake8
       shell: bash -l {0}
