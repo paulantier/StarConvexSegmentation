@@ -33,6 +33,8 @@ jobs:
         echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
         # Install the project in editable mode
         pip install -e .
+        # Install additional tools
+        pip install black isort flake8
 
     - name: Debug Environment
       shell: bash -l {0}
@@ -41,6 +43,24 @@ jobs:
         conda env list
         conda info
         pip list
+
+    - name: Check Code Formatting with Black
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        black --check .
+
+    - name: Check Import Sorting with isort
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        isort --check-only .
+
+    - name: Lint Code with Flake8
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        flake8 .
 
     - name: Run Tests
       shell: bash -l {0}
