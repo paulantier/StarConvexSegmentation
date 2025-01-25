@@ -23,13 +23,22 @@ jobs:
         environment-file: environment.yml
         auto-activate-base: false
 
-    - name: Debug Environment
+    - name: Configure PYTHONPATH and Install Project
       shell: bash -l {0}
       run: |
         conda init bash
         source ~/.bashrc
-        conda env list
         conda activate test
+        # Export PYTHONPATH to include the root directory
+        echo "PYTHONPATH=$(pwd):$PYTHONPATH" >> $GITHUB_ENV
+        # Install the project in editable mode
+        pip install -e .
+
+    - name: Debug Environment
+      shell: bash -l {0}
+      run: |
+        conda activate test
+        conda env list
         conda info
         pip list
 
