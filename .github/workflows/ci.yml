@@ -6,7 +6,12 @@ on:
       - "**"
   pull_request:
     branches:
-      - "**"
+      - main
+
+# Add concurrency configuration for non-main branches
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   test:
@@ -34,7 +39,7 @@ jobs:
         # Install the project in editable mode
         pip install -e .
         # Install additional tools
-        pip install black isort yapf
+        pip install black isort yapf pytest pytest-cov
 
     - name: Debug Environment
       shell: bash -l {0}
@@ -62,8 +67,14 @@ jobs:
         conda activate test
         yapf -ir .
 
-    - name: Run Tests
+    - name: Run Tests with Coverage
       shell: bash -l {0}
       run: |
         conda activate test
-        pytest
+        pytest --cov=./ --cov-report=xml
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
