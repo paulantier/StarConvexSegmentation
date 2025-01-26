@@ -57,9 +57,9 @@ class PolygonUnet(nn.Module):
             nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True),
         )
 
-    def forward(self, x):
+    def forward(self, _x):
         # Encoder forward pass
-        enc1 = self.enc1(x)
+        enc1 = self.enc1(_x)
         enc2 = self.enc2(enc1)
         enc3 = self.enc3(enc2)
         enc4 = self.enc4(enc3)
