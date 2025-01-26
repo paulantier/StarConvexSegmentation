@@ -4,14 +4,12 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torchvision.models import ResNet18_Weights
-
+from StarConvexSegmentation.config import NUM_COORDINATES, NUM_CLASSES  
 
 class PolygonUnet(nn.Module):
     """Class containing the PolygonUnet model definition."""
 
     def __init__(self,
-                 num_coordinates: int = 8,
-                 num_classes: int = 1,
                  pretrained: bool = True):
         super(PolygonUnet, self).__init__()
 
@@ -42,8 +40,8 @@ class PolygonUnet(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.Conv2d(64, num_coordinates + 1 + num_classes,
-                      kernel_size=1),  # Output: num_classesx128x128
+            nn.Conv2d(64, 2 + NUM_COORDINATES + 1 + NUM_CLASSES,
+                      kernel_size=1),  # Output: NUM_CLASSESx128x128
         )
 
     def _decoder_block(self, in_channels: int, out_channels: int):
@@ -78,8 +76,8 @@ class PolygonUnet(nn.Module):
 
 # Example usage
 if __name__ == "__main__":
-    model = PolygonUnet(num_coordinates=8, num_classes=1, pretrained=True)
+    model = PolygonUnet(pretrained=True)
     x = torch.randn(1, 3, 128, 128)  # Example input
     output = model(x)
     print(f"Output shape: {output.shape}"
-          )  # Should be [1, num_classes, 128, 128]
+          )  # Should be [1, NUM_CLASSES, 128, 128]
