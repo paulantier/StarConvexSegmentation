@@ -1,5 +1,6 @@
 import torch
 import pytest
+from StarConvexSegmentation.config import NUM_COORDINATES, NUM_CLASSES, PATCH_SIZE
 
 
 def test_star_polygon_initialization(star_polygon_model):
@@ -9,8 +10,8 @@ def test_star_polygon_initialization(star_polygon_model):
 
 def test_star_polygon_pad_image(star_polygon_model, sample_image):
     padded_image = star_polygon_model._pad_image(sample_image)
-    assert padded_image.shape[2] % star_polygon_model.patch_size == 0
-    assert padded_image.shape[3] % star_polygon_model.patch_size == 0
+    assert padded_image.shape[2] % PATCH_SIZE == 0
+    assert padded_image.shape[3] % PATCH_SIZE == 0
 
 
 def test_star_polygon_create_patches(star_polygon_model, sample_image):
@@ -22,22 +23,15 @@ def test_star_polygon_create_patches(star_polygon_model, sample_image):
 
 def test_star_polygon_assemble_patches(star_polygon_model, sample_image):
     padded_image = star_polygon_model._pad_image(sample_image)
-    patches = star_polygon_model._create_patches(padded_image)
+    assembled_image = star_polygon_model._assemble_patches(padded_image)
 
-    # Process patches through the model to get the correct number of channels
-    processed_patches = []
-    for patch in patches:
-        with torch.no_grad():
-            processed_patch = star_polygon_model.polygon_model(
-                patch.to(star_polygon_model.device))
-            processed_patches.append(processed_patch.to("cpu"))
-
-    assembled_image = star_polygon_model._assemble_patches(
-        processed_patches, sample_image.shape)
-
-    assert assembled_image.shape == (1, 10, 128, 128)
+    # Updated expected output shape: (batch_size, 2 + NUM_COORDINATES + 1 + NUM_CLASSES, height, width)
+    # For NUM_COORDINATES=8 and NUM_CLASSES=1, the number of channels is 12
+    assert assembled_image.shape == (1, 2 + NUM_COORDINATES + 1 + NUM_CLASSES, 128, 128)
 
 
 def test_star_polygon_forward_pass(star_polygon_model, large_sample_image):
     output_image = star_polygon_model(large_sample_image)
-    assert output_image.shape == (5, 10, 3000, 3000)
+    # Updated expected output shape: (batch_size, 2 + NUM_COORDINATES + 1 + NUM_CLASSES, height, width)
+    # For NUM_COORDINATES=8 and NUM_CLASSES=1, the number of channels is 12
+    assert output_image.shape == (5, 2 + NUM_COORDINATES + 1 + NUM_CLASSES, 3000, 3000)
