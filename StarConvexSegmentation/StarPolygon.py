@@ -14,9 +14,8 @@ class StarPolygon:
         num_coordinates: int = 8,
         num_classes: int = 1,
         pretrained: bool = True,
-        device : torch.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        ),
+        device: torch.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu"),
     ):
         self.patch_size = patch_size
         self.device = device
@@ -37,7 +36,9 @@ class StarPolygon:
         _, _, h, w = image.shape
         pad_h = (self.patch_size - (h % self.patch_size)) % self.patch_size
         pad_w = (self.patch_size - (w % self.patch_size)) % self.patch_size
-        padded_image = F.pad(image, (0, pad_w, 0, pad_h), mode="constant", value=0)
+        padded_image = F.pad(image, (0, pad_w, 0, pad_h),
+                             mode="constant",
+                             value=0)
         return padded_image
 
     def _create_patches(
@@ -49,8 +50,10 @@ class StarPolygon:
         _, _, h, w = image.shape
         patches = []
         for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
-            for j in range(0, w - self.patch_size + 1, self.patch_size - overlap):
-                patch = image[:, :, i : i + self.patch_size, j : j + self.patch_size]
+            for j in range(0, w - self.patch_size + 1,
+                           self.patch_size - overlap):
+                patch = image[:, :, i:i + self.patch_size,
+                              j:j + self.patch_size]
                 patches.append(patch)
         return patches
 
@@ -59,16 +62,15 @@ class StarPolygon:
 
         overlap = self.patch_size // 2
 
-        reconstructed_image = torch.zeros(
-            (b, self.featuremap_depth, h, w), dtype=patches[0].dtype
-        )
+        reconstructed_image = torch.zeros((b, self.featuremap_depth, h, w),
+                                          dtype=patches[0].dtype)
 
         patch_idx = 0
-        for i in range(0, h - self.patch_size + 1, self.patch_size - overlap) :
-            for j in range(0, w - self.patch_size + 1, self.patch_size - overlap) :
-                reconstructed_image[
-                    :, :, i : i + self.patch_size, j : j + self.patch_size
-                ] += patches[patch_idx]
+        for i in range(0, h - self.patch_size + 1, self.patch_size - overlap):
+            for j in range(0, w - self.patch_size + 1,
+                           self.patch_size - overlap):
+                reconstructed_image[:, :, i:i + self.patch_size, j:j +
+                                    self.patch_size] += patches[patch_idx]
                 patch_idx += 1
 
         return reconstructed_image
@@ -83,11 +85,11 @@ class StarPolygon:
                 processed_patch = self.polygon_model(patch.to(self.device))
                 processed_patches.append(processed_patch.to("cpu"))
 
-        reconstructed_image = self._assemble_patches(
-            processed_patches, full_image.shape
-        )
+        reconstructed_image = self._assemble_patches(processed_patches,
+                                                     full_image.shape)
 
-        return reconstructed_image[:, :, : full_image.shape[2], : full_image.shape[3]]
+        return reconstructed_image[:, :, :full_image.shape[2], :full_image.
+                                   shape[3]]
 
 
 if __name__ == "__main__":

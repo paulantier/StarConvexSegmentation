@@ -9,25 +9,27 @@ from torchvision.models import ResNet18_Weights
 class PolygonUnet(nn.Module):
     """Class containing the PolygonUnet model definition."""
 
-    def __init__(
-        self, num_coordinates: int = 8, num_classes: int = 1, pretrained: bool = True
-    ):
+    def __init__(self,
+                 num_coordinates: int = 8,
+                 num_classes: int = 1,
+                 pretrained: bool = True):
         super(PolygonUnet, self).__init__()
 
         # Load the pre-trained ResNet-18 model
         weights = ResNet18_Weights.IMAGENET1K_V1 if pretrained else None
         resnet = models.resnet18(weights=weights)
 
-        # Encoder (ResNet-18 layers)                                     # With 128x128 input
-        self.enc1 = nn.Sequential(
-            resnet.conv1, resnet.bn1, resnet.relu
-        )  # Output: 64x64x64
+        # Encoder (ResNet-18 layers) # With 128x128 input
+        self.enc1 = nn.Sequential(resnet.conv1, resnet.bn1,
+                                  resnet.relu)  # Output: 64x64x64
         self.enc2 = resnet.layer1  # Output: 64x64x64
         self.enc3 = resnet.layer2  # Output: 128x32x32
         self.enc4 = resnet.layer3  # Output: 256x16x16
         self.enc5 = resnet.layer4  # Output: 512x8x8
 
-        self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+        self.up = nn.Upsample(scale_factor=2,
+                              mode="bilinear",
+                              align_corners=True)
 
         # Decoder                                  # With 128x128 input
         self.dec4 = self._decoder_block(512, 256)  # Output: 256x16x16
@@ -40,9 +42,8 @@ class PolygonUnet(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
-            nn.Conv2d(
-                64, num_coordinates + 1 + num_classes, kernel_size=1
-            ),  # Output: num_classesx128x128
+            nn.Conv2d(64, num_coordinates + 1 + num_classes,
+                      kernel_size=1),  # Output: num_classesx128x128
         )
 
     def _decoder_block(self, in_channels: int, out_channels: int):
@@ -80,4 +81,5 @@ if __name__ == "__main__":
     model = PolygonUnet(num_coordinates=8, num_classes=1, pretrained=True)
     x = torch.randn(1, 3, 128, 128)  # Example input
     output = model(x)
-    print(f"Output shape: {output.shape}")  # Should be [1, num_classes, 128, 128]
+    print(f"Output shape: {output.shape}"
+          )  # Should be [1, num_classes, 128, 128]

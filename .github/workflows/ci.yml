@@ -34,7 +34,7 @@ jobs:
         # Install the project in editable mode
         pip install -e .
         # Install additional tools
-        pip install black isort flake8
+        pip install black isort yapf
 
     - name: Debug Environment
       shell: bash -l {0}
@@ -56,11 +56,11 @@ jobs:
         conda activate test
         isort .
 
-    - name: Lint Code with Flake8
+    - name: Format Code with YAPF
       shell: bash -l {0}
       run: |
         conda activate test
-        flake8 . || echo "Flake8 found issues, but the CI will not fail."
+        yapf -ir .
 
     - name: Run Tests
       shell: bash -l {0}
